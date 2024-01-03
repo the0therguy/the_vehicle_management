@@ -74,18 +74,15 @@ class VehiclePrice(models.Model):
     series = models.ForeignKey(VehicleSeries, on_delete=models.CASCADE, null=True, blank=True)
     posting_date = models.DateField(auto_now_add=True)
     vehicle_details = models.OneToOneField(VehicleDetails, on_delete=models.CASCADE, null=True, blank=True)
-    company_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    customer_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    sale_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0)
-    total_quantity = models.IntegerField(editable=False, default=0)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0)
-    grand_total = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0)
+    currency = models.CharField(max_length=5, default="$")
+    company_price = models.DecimalField(max_digits=10, decimal_places=2)
+    customer_price = models.DecimalField(max_digits=10, decimal_places=2)
+    sale_price = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_quantity = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
         self.sale_price = self.company_price + self.customer_price
-        self.total_quantity = sum(item.quantity for item in self.vehicleprice_set.all())
-        self.total_amount = sum(item.amount for item in self.vehicleprice_set.all())
-        self.grand_total = self.sale_price + self.total_amount
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -93,11 +90,11 @@ class VehiclePrice(models.Model):
 
 
 class OtherVehicleItems(models.Model):
-    vehicle_price = models.ForeignKey(VehiclePrice, on_delete=models.CASCADE)
-    item = models.CharField(max_length=50)
+    vehicle_price = models.ForeignKey(VehiclePrice, on_delete=models.CASCADE, related_name='other_items')
+    item = models.CharField(max_length=200)
     quantity = models.IntegerField(default=1)
-    rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False, default=0)
+    rate = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, editable=False)
 
     def save(self, *args, **kwargs):
         self.amount = self.quantity * self.rate
